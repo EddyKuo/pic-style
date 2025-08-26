@@ -214,9 +214,11 @@ function handleImageUpload(event) {
             
             // Flip the image's Y-axis to match WebGL's coordinate system
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-
             gl.bindTexture(gl.TEXTURE_2D, textures.image);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+            // IMPORTANT: Reset the state to false so it doesn't affect other texture uploads (like LUTs)
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+
             resizeFBOs(img.width, img.height);
             render();
         };
