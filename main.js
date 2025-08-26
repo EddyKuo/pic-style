@@ -8,7 +8,7 @@ ipcMain.handle('get-paths', () => {
     return {
         isDev: isDev,
         resourcesPath: process.resourcesPath,
-        dirname: __dirname
+        dirname: String(__dirname)
     };
 });
 
@@ -26,7 +26,7 @@ function createWindow() {
   mainWindow.loadFile('index.html');
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {

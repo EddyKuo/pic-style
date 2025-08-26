@@ -20,7 +20,8 @@ function getResourcePath(relativePath) {
         basePath = appPaths.dirname;
     }
     // Use URL format for fetch
-    return `file://${basePath}/${relativePath.replace(/\\/g, '/')}`;
+        // In development, it's relative to the project root.
+    return `file://${appPaths.dirname}/${relativePath.replace(/\/g, '/')}`;
 }
 
 // --- Main Initialization ---
