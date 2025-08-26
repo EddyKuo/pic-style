@@ -1,0 +1,387 @@
+[
+  {
+    "id": "Arabica_12",
+    "name": "Arabica 12",
+    "lut_3d": "Arabica 12.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Ava_614",
+    "name": "Ava 614",
+    "lut_3d": "Ava 614.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Azrael_93",
+    "name": "Azrael 93",
+    "lut_3d": "Azrael 93.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Bourbon_64",
+    "name": "Bourbon 64",
+    "lut_3d": "Bourbon 64.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Byers_11",
+    "name": "Byers 11",
+    "lut_3d": "Byers 11.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Chemical_168",
+    "name": "Chemical 168",
+    "lut_3d": "Chemical 168.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Clayton_33",
+    "name": "Clayton 33",
+    "lut_3d": "Clayton 33.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Clouseau_54",
+    "name": "Clouseau 54",
+    "lut_3d": "Clouseau 54.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Cobi_3",
+    "name": "Cobi 3",
+    "lut_3d": "Cobi 3.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Contrail_35",
+    "name": "Contrail 35",
+    "lut_3d": "Contrail 35.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Cubicle_99",
+    "name": "Cubicle 99",
+    "lut_3d": "Cubicle 99.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Django_25",
+    "name": "Django 25",
+    "lut_3d": "Django 25.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Domingo_145",
+    "name": "Domingo 145",
+    "lut_3d": "Domingo 145.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Faded_47",
+    "name": "Faded 47",
+    "lut_3d": "Faded 47.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Folger_50",
+    "name": "Folger 50",
+    "lut_3d": "Folger 50.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Fusion_88",
+    "name": "Fusion 88",
+    "lut_3d": "Fusion 88.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Hyla_68",
+    "name": "Hyla 68",
+    "lut_3d": "Hyla 68.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Korben_214",
+    "name": "Korben 214",
+    "lut_3d": "Korben 214.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Lenox_340",
+    "name": "Lenox 340",
+    "lut_3d": "Lenox 340.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Lucky_64",
+    "name": "Lucky 64",
+    "lut_3d": "Lucky 64.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "McKinnon_75",
+    "name": "McKinnon 75",
+    "lut_3d": "McKinnon 75.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Milo_5",
+    "name": "Milo 5",
+    "lut_3d": "Milo 5.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Neon_770",
+    "name": "Neon 770",
+    "lut_3d": "Neon 770.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Paladin_1875",
+    "name": "Paladin 1875",
+    "lut_3d": "Paladin 1875.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Pasadena_21",
+    "name": "Pasadena 21",
+    "lut_3d": "Pasadena 21.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Pitaya_15",
+    "name": "Pitaya 15",
+    "lut_3d": "Pitaya 15.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Reeve_38",
+    "name": "Reeve 38",
+    "lut_3d": "Reeve 38.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Remy_24",
+    "name": "Remy 24",
+    "lut_3d": "Remy 24.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Sprocket_231",
+    "name": "Sprocket 231",
+    "lut_3d": "Sprocket 231.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Teigen_28",
+    "name": "Teigen 28",
+    "lut_3d": "Teigen 28.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Trent_18",
+    "name": "Trent 18",
+    "lut_3d": "Trent 18.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Tweed_71",
+    "name": "Tweed 71",
+    "lut_3d": "Tweed 71.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Vireo_37",
+    "name": "Vireo 37",
+    "lut_3d": "Vireo 37.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Zed_32",
+    "name": "Zed 32",
+    "lut_3d": "Zed 32.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  },
+  {
+    "id": "Zeke_39",
+    "name": "Zeke 39",
+    "lut_3d": "Zeke 39.CUBE",
+    "engine_parameters": {
+      "temperature": 0, "tint": 0, "vibrance": 0,
+      "grainIntensity": 15, "grainSize": 1.2, "grainRoughness": 0.5, "grainMono": true,
+      "halationIntensity": 0.1, "halationRadius": 25, "halationThreshold": 0.9,
+      "vignetteIntensity": 0.2
+    }
+  }
+]
