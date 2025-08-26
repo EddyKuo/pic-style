@@ -66,8 +66,8 @@ void main() {
     color = adjustTint(color);
     color = adjustVibrance(color);
 
-    // Apply LUT (Temporarily disabled to revert to a known state)
-    // color = applyLut(color);
+    // Apply LUT
+    color = applyLut(color);
 
     gl_FragColor = vec4(color, 1.0);
 }
