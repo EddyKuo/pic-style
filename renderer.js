@@ -250,15 +250,35 @@ function parseCube(text) {
     const lines = text.split('\n');
     let size = 0;
     const data = [];
+    let readingData = false;
+
     for (const line of lines) {
-        if (line.startsWith('LUT_3D_SIZE')) {
-            size = parseInt(line.split(' ')[1]);
-        } else if (line.match(/^[0-9.e\-+ ]+$/)) {
-            const [r, g, b] = line.split(' ').map(parseFloat);
-            data.push(r, g, b);
+        const trimmedLine = line.trim();
+        if (trimmedLine.length === 0 || trimmedLine.startsWith('#') || trimmedLine.startsWith('TITLE') || trimmedLine.startsWith('DOMAIN')) {
+            continue; // Skip comments, titles, and other metadata
+        }
+
+        if (trimmedLine.startsWith('LUT_3D_SIZE')) {
+            size = parseInt(trimmedLine.split(' ')[1]);
+            continue;
+        }
+        
+        // If we have a size, we can start reading data points
+        if (size > 0) {
+            const parts = trimmedLine.split(/\s+/).filter(Boolean).map(parseFloat);
+            if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+                data.push(...parts);
+            }
         }
     }
-    if (data.length !== size * size * size * 3) throw new Error("LUT data size does not match header");
+
+    if (size === 0) {
+        throw new Error("LUT_3D_SIZE not found in CUBE file");
+    }
+    if (data.length !== size * size * size * 3) {
+        throw new Error(`LUT data size does not match header. Expected ${size*size*size*3} values, but found ${data.length}`);
+    }
+    
     return { data, size };
 }
 
