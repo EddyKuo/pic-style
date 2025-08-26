@@ -212,6 +212,9 @@ function handleImageUpload(event) {
             gl.canvas.height = img.height;
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
             
+            // Flip the image's Y-axis to match WebGL's coordinate system
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
             gl.bindTexture(gl.TEXTURE_2D, textures.image);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
             resizeFBOs(img.width, img.height);
