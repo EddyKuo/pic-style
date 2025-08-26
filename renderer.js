@@ -235,8 +235,8 @@ async function loadLut(url) {
         const { textureData, textureWidth, textureHeight } = convertLutTo2D(data, size);
 
         gl.bindTexture(gl.TEXTURE_2D, textures.lut);
-        // Use RGBA FLOAT textures for maximum compatibility
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, textureWidth, textureHeight, 0, gl.RGBA, gl.FLOAT, textureData);
+        // Use RGBA UNSIGNED_BYTE textures for maximum compatibility
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, textureWidth, textureHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
         
         render();
     } catch (error) {
@@ -265,8 +265,8 @@ function convertLutTo2D(data, size) {
     const numRows = Math.ceil(size / slicesPerRow);
     const textureWidth = size * slicesPerRow;
     const textureHeight = size * numRows;
-    // Create RGBA data
-    const textureData = new Float32Array(textureWidth * textureHeight * 4);
+    // Create RGBA data and convert floats to bytes
+    const textureData = new Uint8Array(textureWidth * textureHeight * 4);
 
     for (let z = 0; z < size; z++) {
         for (let y = 0; y < size; y++) {
@@ -278,18 +278,18 @@ function convertLutTo2D(data, size) {
 
                 const dstX = sliceX * size + x;
                 const dstY = sliceY * size + y;
-                // Destination index is now for RGBA
                 const dstIndex = (dstY * textureWidth + dstX) * 4;
 
-                textureData[dstIndex] = data[srcIndex];
-                textureData[dstIndex + 1] = data[srcIndex + 1];
-                textureData[dstIndex + 2] = data[srcIndex + 2];
-                textureData[dstIndex + 3] = 1.0; // Alpha channel
+                textureData[dstIndex] = Math.round(data[srcIndex] * 255);
+                textureData[dstIndex + 1] = Math.round(data[srcIndex + 1] * 255);
+                textureData[dstIndex + 2] = Math.round(data[srcIndex + 2] * 255);
+                textureData[dstIndex + 3] = 255; // Alpha channel
             }
         }
     }
     return { textureData, textureWidth, textureHeight };
 }
+
 
 // --- Rendering Pipeline ---
 function render() {
