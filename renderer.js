@@ -1,4 +1,5 @@
-console.log("Renderer script loaded.");
+// --- Global App State ---
+let appPaths = {};
 
 // --- Global WebGL variables ---
 let gl;
@@ -8,8 +9,25 @@ let fbos = {};
 let originalImage = { width: 0, height: 0 };
 let currentLutSize = 0;
 
-// --- Main DOMContentLoaded listener ---
-document.addEventListener('DOMContentLoaded', () => {
+// --- Resource Path Helper ---
+function getResourcePath(relativePath) {
+    let basePath;
+    if (!appPaths.isDev) {
+        // Packaged app path
+        basePath = appPaths.resourcesPath;
+    } else {
+        // Development path
+        basePath = appPaths.dirname;
+    }
+    // Use URL format for fetch
+    return `file://${basePath}/${relativePath.replace(/\\/g, '/')}`;
+}
+
+// --- Main Initialization ---
+async function main() {
+    // First, get the paths from the main process
+    appPaths = await window.electron.invoke('get-paths');
+
     const canvas = document.getElementById('gl-canvas');
     gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
 
@@ -18,17 +36,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Enable required extensions for high precision rendering
     gl.getExtension('OES_texture_float');
     gl.getExtension('WEBGL_color_buffer_float');
-    
-    // Log supported extensions for debugging
     console.log("Supported WebGL Extensions:", gl.getSupportedExtensions());
 
     setupUI();
-    loadFilmProfiles();
+    await loadFilmProfiles();
     initWebGL();
-});
+}
+
+document.addEventListener('DOMContentLoaded', main);
+
 
 // --- UI Setup ---
 function setupUI() {
@@ -47,10 +65,12 @@ function setupUI() {
 // --- Film Profile Loading ---
 async function loadFilmProfiles() {
     try {
-        const response = await fetch('./pic-styles.json?_cacheBust=' + new Date().getTime());
+        const profilePath = getResourcePath('pic-styles.json');
+        const response = await fetch(profilePath + '?_cacheBust=' + new Date().getTime());
         const profiles = await response.json();
         const profileSelector = document.getElementById('film-profile-selector');
         
+        profileSelector.innerHTML = ''; // Clear existing
         profiles.forEach(profile => {
             const option = document.createElement('option');
             option.value = profile.id;
@@ -71,6 +91,7 @@ async function loadFilmProfiles() {
 
 function applySelectedProfile() {
     const selector = document.getElementById('film-profile-selector');
+    if(selector.options.length === 0) return;
     const selectedOption = selector.options[selector.selectedIndex];
     const params = selectedOption.dataset;
 
@@ -87,7 +108,8 @@ function applySelectedProfile() {
     document.getElementById('vignette-intensity-slider').value = params.vignetteIntensity || 0;
 
     if (params.lut) {
-        loadLut(`./cubes/${params.lut}`);
+        const lutPath = getResourcePath(`cubes/${params.lut}`);
+        loadLut(lutPath);
     } else {
         render();
     }
@@ -135,10 +157,10 @@ async function loadShader(url) {
 
 async function loadAllShaders() {
     const [vertex, color, halation, composite] = await Promise.all([
-        loadShader('./shaders/vertex.glsl'),
-        loadShader('./shaders/color.glsl'),
-        loadShader('./shaders/halation.glsl'),
-        loadShader('./shaders/composite.glsl')
+        loadShader(getResourcePath('shaders/vertex.glsl')),
+        loadShader(getResourcePath('shaders/color.glsl')),
+        loadShader(getResourcePath('shaders/halation.glsl')),
+        loadShader(getResourcePath('shaders/composite.glsl'))
     ]);
     return { vertex, color, halation, composite };
 }
@@ -388,6 +410,5 @@ function setUniforms(pass) {
 
 // --- File Operations ---
 function saveImage() {
-    const dataURL = gl.canvas.toDataURL('image/png');
-    window.electronAPI.saveImage(dataURL);
+    window.electron.invoke('save-image', gl.canvas.toDataURL('image/png'));
 }

@@ -2,6 +2,16 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+const isDev = require('electron-is-dev');
+
+ipcMain.handle('get-paths', () => {
+    return {
+        isDev: isDev,
+        resourcesPath: process.resourcesPath,
+        dirname: __dirname
+    };
+});
+
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,
