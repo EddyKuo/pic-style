@@ -66,8 +66,10 @@ void main() {
     color = adjustTint(color);
     color = adjustVibrance(color);
 
-    // Apply LUT
-    color = applyLut(color);
+    // Apply LUT if a real 3D LUT is loaded (size > 1). If not, skip LUT sampling to avoid NaNs.
+    if (u_lut_size > 1.0) {
+        color = applyLut(color);
+    }
 
     gl_FragColor = vec4(color, 1.0);
 }

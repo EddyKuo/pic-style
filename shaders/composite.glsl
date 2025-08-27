@@ -9,6 +9,7 @@ uniform sampler2D u_halation_pass; // Result from the halation shader
 uniform float u_time;
 uniform float u_grain_intensity;
 uniform float u_grain_size;
+uniform float u_grain_roughness;
 uniform bool u_grain_mono;
 
 // Vignette parameters
@@ -25,15 +26,19 @@ void main() {
 
     // --- Grain Calculation ---
     vec2 grain_uv = v_texCoord * u_grain_size;
-    float noise = random(grain_uv + fract(u_time));
+    float base_noise = random(grain_uv + fract(u_time));
+    
+    // Apply roughness - higher values create more irregular, chunky grain
+    float roughened_noise = pow(base_noise, mix(1.0, 3.0, u_grain_roughness));
+    
     vec3 grain;
     if (u_grain_mono) {
-        grain = vec3(noise);
+        grain = vec3(roughened_noise);
     } else {
         grain = vec3(
-            random(grain_uv + vec2(fract(u_time), -fract(u_time))),
-            random(grain_uv + vec2(-fract(u_time), fract(u_time))),
-            random(grain_uv + vec2(fract(u_time), fract(u_time)))
+            pow(random(grain_uv + vec2(fract(u_time), -fract(u_time))), mix(1.0, 3.0, u_grain_roughness)),
+            pow(random(grain_uv + vec2(-fract(u_time), fract(u_time))), mix(1.0, 3.0, u_grain_roughness)),
+            pow(random(grain_uv + vec2(fract(u_time), fract(u_time))), mix(1.0, 3.0, u_grain_roughness))
         );
     }
     // Apply grain using an overlay blend

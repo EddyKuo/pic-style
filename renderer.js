@@ -11,23 +11,14 @@ let currentLutSize = 0;
 
 // --- Resource Path Helper ---
 function getResourcePath(relativePath) {
-    let basePath;
-    if (!appPaths.isDev) {
-        // Packaged app path
-        basePath = appPaths.resourcesPath;
-    } else {
-        // Development path
-        basePath = appPaths.dirname;
-    }
-    // Use URL format for fetch
-        // In development, it's relative to the project root.
-    return `file://${appPaths.dirname}/${relativePath.replace(/\/g, '/')}`;
+    const basePath = appPaths.isDev ? appPaths.dirname : appPaths.resourcesPath;
+    const cleanPath = relativePath.replace(/\\/g, '/'); // 統一路徑分隔符號
+    return `file://${basePath}/${cleanPath}`;
 }
 
 // --- Main Initialization ---
 async function main() {
-    // First, get the paths from the main process
-    appPaths = await window.electron.invoke('get-paths');
+    appPaths = await window.electron.getPaths();
 
     const canvas = document.getElementById('gl-canvas');
     gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
@@ -39,15 +30,16 @@ async function main() {
 
     gl.getExtension('OES_texture_float');
     gl.getExtension('WEBGL_color_buffer_float');
-    console.log("Supported WebGL Extensions:", gl.getSupportedExtensions());
+    console.log("支援的 WebGL 擴展:", gl.getSupportedExtensions());
 
     setupUI();
+    // Initialize WebGL resources (shaders, programs, textures, FBOs) first
+    await initWebGL();
+    // Then load film profiles which may call loadLut() and depend on textures being ready
     await loadFilmProfiles();
-    initWebGL();
 }
 
 document.addEventListener('DOMContentLoaded', main);
-
 
 // --- UI Setup ---
 function setupUI() {
@@ -55,6 +47,7 @@ function setupUI() {
     document.getElementById('save-btn').addEventListener('click', saveImage);
     document.getElementById('batch-btn').addEventListener('click', () => document.getElementById('batch-input').click());
     document.getElementById('file-input').addEventListener('change', handleImageUpload);
+    document.getElementById('batch-input').addEventListener('change', handleBatchProcess);
 
     const controls = document.querySelectorAll('input, select');
     controls.forEach(control => {
@@ -66,11 +59,19 @@ function setupUI() {
 // --- Film Profile Loading ---
 async function loadFilmProfiles() {
     try {
-        const profilePath = getResourcePath('pic-styles.json');
-        const response = await fetch(profilePath + '?_cacheBust=' + new Date().getTime());
-        const profiles = await response.json();
+        let profiles;
+        if (!appPaths.isDev) {
+            // In packaged mode, use read-extra-resource
+            const profileContent = await window.electron.readExtraResource('pic-styles.json');
+            profiles = JSON.parse(profileContent);
+        } else {
+            // In dev mode, use fetch as before
+            const profilePath = getResourcePath('pic-styles.json');
+            const response = await fetch(profilePath + '?_cacheBust=' + new Date().getTime());
+            profiles = await response.json();
+        }
         const profileSelector = document.getElementById('film-profile-selector');
-        
+
         profileSelector.innerHTML = ''; // Clear existing
         profiles.forEach(profile => {
             const option = document.createElement('option');
@@ -82,17 +83,18 @@ async function loadFilmProfiles() {
             });
             profileSelector.appendChild(option);
         });
-        
+
         profileSelector.addEventListener('change', applySelectedProfile);
         applySelectedProfile();
     } catch (error) {
-        console.error('Error loading film profiles:', error);
+        console.error('載入底片風格時發生錯誤:', error);
     }
 }
 
 function applySelectedProfile() {
     const selector = document.getElementById('film-profile-selector');
-    if(selector.options.length === 0) return;
+    if (selector.options.length === 0) return;
+
     const selectedOption = selector.options[selector.selectedIndex];
     const params = selectedOption.dataset;
 
@@ -119,7 +121,7 @@ function applySelectedProfile() {
 // --- WebGL Initialization ---
 async function initWebGL() {
     const shaderSources = await loadAllShaders();
-    
+
     programs.color = createProgram(shaderSources.vertex, shaderSources.color);
     programs.halation = createProgram(shaderSources.vertex, shaderSources.halation);
     programs.composite = createProgram(shaderSources.vertex, shaderSources.composite);
@@ -133,9 +135,13 @@ async function initWebGL() {
     setupVertexAttributes(programs.composite);
 
     textures.image = createTexture();
-    textures.lut = createTexture(); // Will be our 2D LUT texture
+    textures.lut = createTexture();
+    // Ensure LUT texture has a safe default 1x1 white pixel to act as a neutral/pass-through LUT
+    gl.bindTexture(gl.TEXTURE_2D, textures.lut);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255,255,255,255]));
+    gl.bindTexture(gl.TEXTURE_2D, null);
 
-    console.log("WebGL initialized with 2D LUT emulation.");
+    console.log("WebGL 已初始化，使用 2D LUT 模擬");
     gl.clearColor(0.1, 0.1, 0.1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 }
@@ -152,17 +158,55 @@ function setupVertexAttributes(program) {
 
 // --- Shader and Program Utilities ---
 async function loadShader(url) {
-    const response = await fetch(url);
-    return response.text();
+    // When packaged, fetch won't work for files inside app.asar. Use the main process to read resources.
+    if (!appPaths.isDev) {
+        // url comes in form file://{base}/{path}
+        const fileUrlPrefix = 'file://';
+        let absolute = url;
+        if (absolute.startsWith(fileUrlPrefix)) absolute = absolute.slice(fileUrlPrefix.length);
+        // Normalize slashes
+        absolute = absolute.replace(/\\/g, '/');
+        const resources = (appPaths.resourcesPath || '').replace(/\\/g, '/');
+        let relative;
+        // If absolute path starts with the resources path, strip that prefix
+        if (resources && absolute.toLowerCase().startsWith(resources.toLowerCase())) {
+            relative = absolute.slice(resources.length);
+            relative = relative.replace(/^\/+/, '');
+        } else {
+            // Fallback: if path contains app.asar, strip up to and including app.asar/
+            const idx = absolute.toLowerCase().indexOf('app.asar/');
+            if (idx !== -1) {
+                relative = absolute.slice(idx + 'app.asar/'.length);
+            } else {
+                // As a last resort, remove leading drive letter or slash
+                relative = absolute.replace(/^([A-Za-z]:)?\//, '');
+            }
+        }
+        return await window.electron.invoke('read-resource', relative);
+    } else {
+        const response = await fetch(url);
+        return response.text();
+    }
 }
 
 async function loadAllShaders() {
-    const [vertex, color, halation, composite] = await Promise.all([
-        loadShader(getResourcePath('shaders/vertex.glsl')),
-        loadShader(getResourcePath('shaders/color.glsl')),
-        loadShader(getResourcePath('shaders/halation.glsl')),
-        loadShader(getResourcePath('shaders/composite.glsl'))
-    ]);
+    const shaderPaths = [
+        'shaders/vertex.glsl',
+        'shaders/color.glsl',
+        'shaders/halation.glsl',
+        'shaders/composite.glsl'
+    ];
+
+    // When packaged, read shader sources from extraResources using read-extra-resource.
+    if (!appPaths.isDev) {
+        const loaders = shaderPaths.map(p => window.electron.readExtraResource(p));
+        const [vertex, color, halation, composite] = await Promise.all(loaders);
+        return { vertex, color, halation, composite };
+    }
+
+    // In dev mode, fetch via file:// URLs as before.
+    const loaders = shaderPaths.map(p => loadShader(getResourcePath(p)));
+    const [vertex, color, halation, composite] = await Promise.all(loaders);
     return { vertex, color, halation, composite };
 }
 
@@ -197,6 +241,10 @@ function createProgram(vertexSource, fragmentSource) {
 function createTexture(width = 1, height = 1, data = null, type = gl.UNSIGNED_BYTE) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
+    // Ensure a texture is bound before calling texImage2D
+    if (!gl.getParameter(gl.TEXTURE_BINDING_2D)) {
+        console.error('createTexture: failed to bind texture');
+    }
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, type, data);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -216,8 +264,14 @@ function createFBO(width, height) {
 }
 
 function resizeFBOs(width, height) {
-    if (fbos.color) gl.deleteFramebuffer(fbos.color.framebuffer), gl.deleteTexture(fbos.color.texture);
-    if (fbos.halation) gl.deleteFramebuffer(fbos.halation.framebuffer), gl.deleteTexture(fbos.halation.texture);
+    if (fbos.color) {
+        gl.deleteFramebuffer(fbos.color.framebuffer);
+        gl.deleteTexture(fbos.color.texture);
+    }
+    if (fbos.halation) {
+        gl.deleteFramebuffer(fbos.halation.framebuffer);
+        gl.deleteTexture(fbos.halation.texture);
+    }
     fbos.color = createFBO(width, height);
     fbos.halation = createFBO(width, height);
 }
@@ -234,12 +288,10 @@ function handleImageUpload(event) {
             gl.canvas.width = img.width;
             gl.canvas.height = img.height;
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-            
-            // Flip the image's Y-axis to match WebGL's coordinate system
+
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
             gl.bindTexture(gl.TEXTURE_2D, textures.image);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-            // IMPORTANT: Reset the state to false so it doesn't affect other texture uploads (like LUTs)
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
 
             resizeFBOs(img.width, img.height);
@@ -252,20 +304,32 @@ function handleImageUpload(event) {
 
 async function loadLut(url) {
     try {
-        const response = await fetch(url);
-        const text = await response.text();
+        let text;
+        if (!appPaths.isDev) {
+            // In packaged mode, extract relative path and use read-extra-resource
+            const relativePath = url.replace(/^file:\/\/.*?\//, '').replace(/\\/g, '/');
+            text = await window.electron.readExtraResource(relativePath);
+        } else {
+            // In dev mode, use fetch as before
+            const response = await fetch(url);
+            text = await response.text();
+        }
         const { data, size } = parseCube(text);
         currentLutSize = size;
-        
+
         const { textureData, textureWidth, textureHeight } = convertLutTo2D(data, size);
 
+        // Defensive bind: make sure the LUT texture is bound before uploading texImage2D
+        if (!textures.lut) textures.lut = createTexture();
         gl.bindTexture(gl.TEXTURE_2D, textures.lut);
-        // Use RGBA UNSIGNED_BYTE textures for maximum compatibility
+        if (!gl.getParameter(gl.TEXTURE_BINDING_2D)) {
+            console.error('loadLut: failed to bind LUT texture');
+        }
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, textureWidth, textureHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
-        
+
         render();
     } catch (error) {
-        console.error("Failed to load or parse LUT:", error);
+        console.error("載入或解析 LUT 時發生錯誤:", error);
     }
 }
 
@@ -273,35 +337,33 @@ function parseCube(text) {
     const lines = text.split('\n');
     let size = 0;
     const data = [];
-    let readingData = false;
 
     for (const line of lines) {
         const trimmedLine = line.trim();
-        if (trimmedLine.length === 0 || trimmedLine.startsWith('#') || trimmedLine.startsWith('TITLE') || trimmedLine.startsWith('DOMAIN')) {
-            continue; // Skip comments, titles, and other metadata
+        if (!trimmedLine || trimmedLine.startsWith('#') || trimmedLine.startsWith('TITLE') || trimmedLine.startsWith('DOMAIN')) {
+            continue;
         }
 
         if (trimmedLine.startsWith('LUT_3D_SIZE')) {
             size = parseInt(trimmedLine.split(' ')[1]);
             continue;
         }
-        
-        // If we have a size, we can start reading data points
+
         if (size > 0) {
             const parts = trimmedLine.split(/\s+/).filter(Boolean).map(parseFloat);
-            if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+            if (parts.length === 3 && parts.every(v => !isNaN(v))) {
                 data.push(...parts);
             }
         }
     }
 
     if (size === 0) {
-        throw new Error("LUT_3D_SIZE not found in CUBE file");
+        throw new Error("CUBE 檔案中找不到 LUT_3D_SIZE");
     }
     if (data.length !== size * size * size * 3) {
-        throw new Error(`LUT data size does not match header. Expected ${size*size*size*3} values, but found ${data.length}`);
+        throw new Error(`LUT 資料大小不符. 預期 ${size*size*size*3}, 實際 ${data.length}`);
     }
-    
+
     return { data, size };
 }
 
@@ -310,14 +372,14 @@ function convertLutTo2D(data, size) {
     const numRows = Math.ceil(size / slicesPerRow);
     const textureWidth = size * slicesPerRow;
     const textureHeight = size * numRows;
-    // Create RGBA data and convert floats to bytes
+
     const textureData = new Uint8Array(textureWidth * textureHeight * 4);
 
     for (let z = 0; z < size; z++) {
         for (let y = 0; y < size; y++) {
             for (let x = 0; x < size; x++) {
                 const srcIndex = (z * size * size + y * size + x) * 3;
-                
+
                 const sliceX = Math.floor(z % slicesPerRow);
                 const sliceY = Math.floor(z / slicesPerRow);
 
@@ -328,57 +390,55 @@ function convertLutTo2D(data, size) {
                 textureData[dstIndex] = Math.round(data[srcIndex] * 255);
                 textureData[dstIndex + 1] = Math.round(data[srcIndex + 1] * 255);
                 textureData[dstIndex + 2] = Math.round(data[srcIndex + 2] * 255);
-                textureData[dstIndex + 3] = 255; // Alpha channel
+                textureData[dstIndex + 3] = 255;
             }
         }
     }
     return { textureData, textureWidth, textureHeight };
 }
 
-
 // --- Rendering Pipeline ---
 function render() {
     if (!originalImage.width || !programs.composite) return;
 
-    // 1. Color Pass
+    // Color Pass
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbos.color.framebuffer);
     gl.useProgram(programs.color);
-    
-    // Explicitly bind textures to specific units
+
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, textures.image);
     gl.uniform1i(gl.getUniformLocation(programs.color, 'u_image'), 0);
-    
+
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, textures.lut); // Bind our 2D LUT
+    gl.bindTexture(gl.TEXTURE_2D, textures.lut);
     gl.uniform1i(gl.getUniformLocation(programs.color, 'u_lut'), 1);
 
     setUniforms('color');
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-    // 2. Halation Pass
+    // Halation Pass
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbos.halation.framebuffer);
     gl.useProgram(programs.halation);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, fbos.color.texture);
     gl.uniform1i(gl.getUniformLocation(programs.halation, 'u_image'), 0);
-    
+
     setUniforms('halation');
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-    // 3. Composite Pass (render to canvas)
+    // Composite Pass
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.useProgram(programs.composite);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, fbos.color.texture);
     gl.uniform1i(gl.getUniformLocation(programs.composite, 'u_color_pass'), 0);
-    
+
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, fbos.halation.texture);
     gl.uniform1i(gl.getUniformLocation(programs.composite, 'u_halation_pass'), 1);
-    
+
     setUniforms('composite');
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
@@ -391,17 +451,23 @@ function setUniforms(pass) {
     const uniforms = {
         'u_resolution': [gl.canvas.width, gl.canvas.height],
         'u_time': performance.now() / 1000,
-        'u_lut_size': currentLutSize,
-        'u_temperature': (getVal('temperature-slider')/100)*0.5, 'u_tint': (getVal('tint-slider')/100)*0.5,
-        'u_vibrance': getVal('vibrance-slider')/100, 'u_grain_intensity': getVal('grain-intensity-slider')/100,
-        'u_grain_size': getVal('grain-size-slider'), 'u_grain_mono': getChecked('grain-mono-toggle'),
-        'u_halation_intensity': getVal('halation-intensity-slider'), 'u_halation_radius': getVal('halation-radius-slider'),
-        'u_halation_threshold': getVal('halation-threshold-slider'), 'u_vignette_intensity': getVal('vignette-intensity-slider'),
+    'u_lut_size': Math.max(1, currentLutSize),
+        'u_temperature': (getVal('temperature-slider')/100)*0.5,
+        'u_tint': (getVal('tint-slider')/100)*0.5,
+        'u_vibrance': getVal('vibrance-slider')/100,
+        'u_grain_intensity': getVal('grain-intensity-slider')/100,
+        'u_grain_size': getVal('grain-size-slider'),
+        'u_grain_roughness': getVal('grain-roughness-slider'),
+        'u_grain_mono': getChecked('grain-mono-toggle'),
+        'u_halation_intensity': getVal('halation-intensity-slider'),
+        'u_halation_radius': getVal('halation-radius-slider'),
+        'u_halation_threshold': getVal('halation-threshold-slider'),
+        'u_vignette_intensity': getVal('vignette-intensity-slider'),
     };
 
     for (const [name, value] of Object.entries(uniforms)) {
         const location = gl.getUniformLocation(p, name);
-        if (location) {
+        if (location !== null) {
             if (Array.isArray(value)) gl.uniform2fv(location, value);
             else if (typeof value === 'boolean') gl.uniform1i(location, value);
             else gl.uniform1f(location, value);
@@ -409,7 +475,81 @@ function setUniforms(pass) {
     }
 }
 
+// --- Batch Processing ---
+async function handleBatchProcess(event) {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+    
+    console.log(`開始批次處理 ${files.length} 個檔案...`);
+    
+    const originalCanvas = { width: gl.canvas.width, height: gl.canvas.height };
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        console.log(`處理檔案 ${i + 1}/${files.length}: ${file.name}`);
+        
+        try {
+            // Load image
+            const imageData = await loadFileAsImage(file);
+            
+            // Process image off-screen
+            await processImageOffscreen(imageData);
+            
+            // Save processed image
+            const fileName = file.name.replace(/\.[^/.]+$/, '_底片.png');
+            const dataURL = gl.canvas.toDataURL('image/png');
+            await window.electron.saveImage(dataURL);
+            
+            console.log(`完成: ${fileName}`);
+        } catch (error) {
+            console.error(`處理 ${file.name} 時發生錯誤:`, error);
+        }
+    }
+    
+    // Restore original canvas size
+    gl.canvas.width = originalCanvas.width;
+    gl.canvas.height = originalCanvas.height;
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    
+    console.log('批次處理完成！');
+    event.target.value = ''; // Reset file input
+}
+
+function loadFileAsImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function processImageOffscreen(img) {
+    // Update canvas size and viewport
+    originalImage = { width: img.width, height: img.height };
+    gl.canvas.width = img.width;
+    gl.canvas.height = img.height;
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+    // Upload image to GPU
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.bindTexture(gl.TEXTURE_2D, textures.image);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+
+    // Resize FBOs for new image size
+    resizeFBOs(img.width, img.height);
+    
+    // Render with current settings
+    render();
+}
+
 // --- File Operations ---
 function saveImage() {
-    window.electron.invoke('save-image', gl.canvas.toDataURL('image/png'));
+    window.electron.saveImage(gl.canvas.toDataURL('image/png'));
 }

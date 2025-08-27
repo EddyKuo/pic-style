@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "pack": "electron-builder",
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "start": "electron .",
+  "clean": "if exist dist rd /s /q dist",
+  "build": "npm run clean && electron-builder",
+  "build:alt": "electron-builder --config.directories.output=dist2",
+  "pack": "electron-builder",
+  "test": "echo \"Error: no test specified\" && exit 1"
   },
   "build": {
     "appId": "com.picstyle.app",
@@ -14,10 +17,9 @@
       "main.js",
       "preload.js",
       "index.html",
-      "renderer.js",
-      "shaders/**/*",
-      "pic-styles.json"
+      "renderer.js"
     ],
+    "icon": "build/icon.ico",
     "extraResources": [
       {
         "from": "./cubes",
@@ -25,18 +27,44 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "./shaders",
+        "to": "shaders",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "./pic-styles.json",
+        "to": "pic-styles.json"
       }
-    ]
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.exe"
+    }
   },
 
   "keywords": [],
   "author": "",
+  "description": "A small film simulation / LUT previewer and batch processor.",
   "license": "ISC",
   "type": "commonjs",
-  "description": "",
+  
+  "dependencies": {
+  },
   "devDependencies": {
     "electron": "^37.3.1",
-    "electron-builder": "^26.0.12",
-    "electron-is-dev": "^3.0.1"
+    "electron-builder": "^26.0.12"
   }
 }
