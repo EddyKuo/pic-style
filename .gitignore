@@ -2,6 +2,10 @@
 dist/
 build/
 
+# AI assistant configurations and caches
+.claude/
+.gemini/
+
 # IDE and editor files  
 .vscode/
 .idea/
@@ -13,6 +17,7 @@ build/
 Thumbs.db
 
 # Logs
+logs/
 *.log
 npm-debug.log*
 
@@ -29,6 +34,3 @@ node_modules/
 
 # Optional REPL history
 .node_repl_history
-
-# Claude configuration (optional - remove if you want to include)
-.claude/
