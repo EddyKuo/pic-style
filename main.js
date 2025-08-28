@@ -28,8 +28,10 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
 
-  // Open the DevTools for debugging (temporarily enabled for troubleshooting)
-  mainWindow.webContents.openDevTools();
+  // Open the DevTools only in development
+  if (isDev) {
+    mainWindow.webContents.openDevTools();
+  }
 }
 
 app.whenReady().then(() => {
@@ -58,7 +60,7 @@ ipcMain.handle('save-image', async (event, base64Data) => {
   try {
     const data = base64Data.replace(/^data:image\/png;base64,/, '');
     await fs.promises.writeFile(filePath, data, 'base64');
-    console.log('圖片儲存成功:', filePath);
+    if (isDev) console.log('圖片儲存成功:', filePath);
     return { success: true, filePath };
   } catch (err) {
     console.error('圖片儲存失敗:', err);
@@ -71,8 +73,10 @@ ipcMain.handle('batch-process', async (event, files, settings) => {
   const safeFiles = Array.isArray(files) ? files.map(f => String(f)) : [];
   const safeSettings = settings && typeof settings === 'object' ? JSON.parse(JSON.stringify(settings)) : {};
 
-  console.log('收到批次處理請求:', safeFiles);
-  console.log('設定參數:', safeSettings);
+  if (isDev) {
+    console.log('收到批次處理請求:', safeFiles);
+    console.log('設定參數:', safeSettings);
+  }
 
   // Simulate processing and return a serializable summary
   const processed = safeFiles.map(file => {
@@ -110,7 +114,7 @@ ipcMain.handle('read-resource', async (event, relativePath) => {
 
     // Now join with app path (works when app.getAppPath() points into app.asar)
     const fullPath = path.join(app.getAppPath(), requested);
-    console.log('read-resource resolved:', { requested, fullPath });
+    if (isDev) console.log('read-resource resolved:', { requested, fullPath });
     const content = await fs.promises.readFile(fullPath, 'utf8');
     return content;
   } catch (err) {
@@ -127,14 +131,14 @@ ipcMain.handle('read-extra-resource', async (event, relativePath) => {
     // In development, use project directory
     if (isDev) {
       const fullPath = path.join(__dirname, requested);
-      console.log('read-extra-resource (dev) resolved:', { requested, fullPath });
+      if (isDev) console.log('read-extra-resource (dev) resolved:', { requested, fullPath });
       const content = await fs.promises.readFile(fullPath, 'utf8');
       return content;
     }
     
     // In production, extraResources are in the resources folder
     const fullPath = path.join(process.resourcesPath, requested);
-    console.log('read-extra-resource (prod) resolved:', { requested, fullPath });
+    if (isDev) console.log('read-extra-resource (prod) resolved:', { requested, fullPath });
     const content = await fs.promises.readFile(fullPath, 'utf8');
     return content;
   } catch (err) {

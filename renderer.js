@@ -1,6 +1,13 @@
 // --- Global App State ---
 let appPaths = {};
 
+// --- Debug Logging Helper ---
+const debugLog = (...args) => {
+    if (appPaths.isDev) {
+        console.log(...args);
+    }
+};
+
 // --- Global WebGL variables ---
 let gl;
 let programs = {};
@@ -30,7 +37,7 @@ async function main() {
 
     gl.getExtension('OES_texture_float');
     gl.getExtension('WEBGL_color_buffer_float');
-    console.log("支援的 WebGL 擴展:", gl.getSupportedExtensions());
+    debugLog("支援的 WebGL 擴展:", gl.getSupportedExtensions());
 
     setupUI();
     // Initialize WebGL resources (shaders, programs, textures, FBOs) first
@@ -141,7 +148,7 @@ async function initWebGL() {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255,255,255,255]));
     gl.bindTexture(gl.TEXTURE_2D, null);
 
-    console.log("WebGL 已初始化，使用 2D LUT 模擬");
+    debugLog("WebGL 已初始化，使用 2D LUT 模擬");
     gl.clearColor(0.1, 0.1, 0.1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 }
@@ -480,13 +487,13 @@ async function handleBatchProcess(event) {
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
     
-    console.log(`開始批次處理 ${files.length} 個檔案...`);
+    debugLog(`開始批次處理 ${files.length} 個檔案...`);
     
     const originalCanvas = { width: gl.canvas.width, height: gl.canvas.height };
     
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        console.log(`處理檔案 ${i + 1}/${files.length}: ${file.name}`);
+        debugLog(`處理檔案 ${i + 1}/${files.length}: ${file.name}`);
         
         try {
             // Load image
@@ -500,7 +507,7 @@ async function handleBatchProcess(event) {
             const dataURL = gl.canvas.toDataURL('image/png');
             await window.electron.saveImage(dataURL);
             
-            console.log(`完成: ${fileName}`);
+            debugLog(`完成: ${fileName}`);
         } catch (error) {
             console.error(`處理 ${file.name} 時發生錯誤:`, error);
         }
@@ -511,7 +518,7 @@ async function handleBatchProcess(event) {
     gl.canvas.height = originalCanvas.height;
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     
-    console.log('批次處理完成！');
+    debugLog('批次處理完成！');
     event.target.value = ''; // Reset file input
 }
 
