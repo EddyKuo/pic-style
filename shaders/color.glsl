@@ -60,6 +60,13 @@ vec3 adjustVibrance(vec3 color) {
 }
 
 void main() {
+    // Check if texture coordinate is within bounds
+    if (v_texCoord.x < 0.0 || v_texCoord.x > 1.0 || v_texCoord.y < 0.0 || v_texCoord.y > 1.0) {
+        // Outside bounds - render transparent or black
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+    
     vec3 color = texture2D(u_image, v_texCoord).rgb;
 
     color = adjustTemperature(color);

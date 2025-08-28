@@ -16,6 +16,13 @@ let fbos = {};
 let originalImage = { width: 0, height: 0 };
 let currentLutSize = 0;
 
+// --- Zoom and Pan State ---
+let zoomLevel = 1.0;
+let panOffset = { x: 0.0, y: 0.0 };
+let isDragging = false;
+let lastMousePos = { x: 0, y: 0 };
+let renderRequested = false;
+
 // --- Resource Path Helper ---
 function getResourcePath(relativePath) {
     const basePath = appPaths.isDev ? appPaths.dirname : appPaths.resourcesPath;
@@ -58,8 +65,108 @@ function setupUI() {
 
     const controls = document.querySelectorAll('input, select');
     controls.forEach(control => {
-        control.addEventListener('input', render);
-        control.addEventListener('change', render);
+        control.addEventListener('input', requestRender);
+        control.addEventListener('change', requestRender);
+    });
+
+    // Setup zoom and pan controls
+    setupZoomPanControls();
+}
+
+// --- Zoom and Pan Controls ---
+function setupZoomPanControls() {
+    const canvas = document.getElementById('gl-canvas');
+    
+    // Mouse wheel for zoom
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        
+        const zoomFactor = 1.1;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left) / rect.width;
+        const mouseY = (e.clientY - rect.top) / rect.height;
+        
+        if (e.deltaY < 0) {
+            // Zoom in
+            const oldZoom = zoomLevel;
+            zoomLevel *= zoomFactor;
+            zoomLevel = Math.min(zoomLevel, 10.0); // Max zoom
+            
+            // Adjust pan to zoom toward mouse position
+            const zoomChange = zoomLevel / oldZoom;
+            panOffset.x += (mouseX - 0.5) * (1.0 - 1.0 / zoomChange) / zoomLevel;
+            panOffset.y += (mouseY - 0.5) * (1.0 - 1.0 / zoomChange) / zoomLevel;
+        } else {
+            // Zoom out
+            const oldZoom = zoomLevel;
+            zoomLevel /= zoomFactor;
+            zoomLevel = Math.max(zoomLevel, 0.1); // Min zoom
+            
+            // Adjust pan to zoom toward mouse position
+            const zoomChange = zoomLevel / oldZoom;
+            panOffset.x += (mouseX - 0.5) * (1.0 - 1.0 / zoomChange) / zoomLevel;
+            panOffset.y += (mouseY - 0.5) * (1.0 - 1.0 / zoomChange) / zoomLevel;
+        }
+        
+        // Apply pan limits after zoom
+        const maxPan = (zoomLevel - 1.0) / (2.0 * zoomLevel);
+        panOffset.x = Math.max(-maxPan, Math.min(maxPan, panOffset.x));
+        panOffset.y = Math.max(-maxPan, Math.min(maxPan, panOffset.y));
+        
+        requestRender();
+    });
+    
+    // Mouse drag for pan
+    canvas.addEventListener('mousedown', (e) => {
+        if (e.button === 0) { // Left mouse button
+            isDragging = true;
+            lastMousePos = { x: e.clientX, y: e.clientY };
+            canvas.style.cursor = 'grabbing';
+        }
+    });
+    
+    canvas.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            const deltaX = e.clientX - lastMousePos.x;
+            const deltaY = e.clientY - lastMousePos.y;
+            
+            // Convert pixel movement to texture coordinate movement
+            const rect = canvas.getBoundingClientRect();
+            const newPanX = panOffset.x - (deltaX / rect.width) / zoomLevel;
+            const newPanY = panOffset.y + (deltaY / rect.height) / zoomLevel; // Invert Y axis
+            
+            // Calculate maximum pan limits based on zoom level
+            const maxPan = (zoomLevel - 1.0) / (2.0 * zoomLevel);
+            
+            // Clamp pan offset to prevent showing too much empty space
+            panOffset.x = Math.max(-maxPan, Math.min(maxPan, newPanX));
+            panOffset.y = Math.max(-maxPan, Math.min(maxPan, newPanY));
+            
+            lastMousePos = { x: e.clientX, y: e.clientY };
+            requestRender(); // Use throttled rendering
+        }
+    });
+    
+    canvas.addEventListener('mouseup', (e) => {
+        if (e.button === 0) {
+            isDragging = false;
+            canvas.style.cursor = 'grab';
+        }
+    });
+    
+    canvas.addEventListener('mouseleave', () => {
+        isDragging = false;
+        canvas.style.cursor = 'default';
+    });
+    
+    // Set initial cursor
+    canvas.style.cursor = 'grab';
+    
+    // Double-click to reset zoom and pan
+    canvas.addEventListener('dblclick', () => {
+        zoomLevel = 1.0;
+        panOffset = { x: 0.0, y: 0.0 };
+        requestRender();
     });
 }
 
@@ -121,7 +228,7 @@ function applySelectedProfile() {
         const lutPath = getResourcePath(`cubes/${params.lut}`);
         loadLut(lutPath);
     } else {
-        render();
+        requestRender();
     }
 }
 
@@ -302,7 +409,7 @@ function handleImageUpload(event) {
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
 
             resizeFBOs(img.width, img.height);
-            render();
+            requestRender();
         };
         img.src = e.target.result;
     };
@@ -334,7 +441,7 @@ async function loadLut(url) {
         }
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, textureWidth, textureHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
 
-        render();
+        requestRender();
     } catch (error) {
         console.error("載入或解析 LUT 時發生錯誤:", error);
     }
@@ -404,8 +511,19 @@ function convertLutTo2D(data, size) {
     return { textureData, textureWidth, textureHeight };
 }
 
+// --- Optimized Rendering with RequestAnimationFrame ---
+function requestRender() {
+    if (!renderRequested) {
+        renderRequested = true;
+        requestAnimationFrame(() => {
+            render();
+            renderRequested = false;
+        });
+    }
+}
+
 // --- Rendering Pipeline ---
-function render() {
+function render(forSave = false) {
     if (!originalImage.width || !programs.composite) return;
 
     // Color Pass
@@ -420,7 +538,7 @@ function render() {
     gl.bindTexture(gl.TEXTURE_2D, textures.lut);
     gl.uniform1i(gl.getUniformLocation(programs.color, 'u_lut'), 1);
 
-    setUniforms('color');
+    setUniforms('color', forSave);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
     // Halation Pass
@@ -431,7 +549,7 @@ function render() {
     gl.bindTexture(gl.TEXTURE_2D, fbos.color.texture);
     gl.uniform1i(gl.getUniformLocation(programs.halation, 'u_image'), 0);
 
-    setUniforms('halation');
+    setUniforms('halation', forSave);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
     // Composite Pass
@@ -446,19 +564,26 @@ function render() {
     gl.bindTexture(gl.TEXTURE_2D, fbos.halation.texture);
     gl.uniform1i(gl.getUniformLocation(programs.composite, 'u_halation_pass'), 1);
 
-    setUniforms('composite');
+    setUniforms('composite', forSave);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 
-function setUniforms(pass) {
+function setUniforms(pass, forSave = false) {
     const p = programs[pass];
     const getVal = (id) => parseFloat(document.getElementById(id).value);
     const getChecked = (id) => document.getElementById(id).checked;
 
+    // For saving, reset zoom and pan to original view
+    const currentZoom = forSave ? 1.0 : zoomLevel;
+    const currentPanX = forSave ? 0.0 : panOffset.x;
+    const currentPanY = forSave ? 0.0 : panOffset.y;
+
     const uniforms = {
         'u_resolution': [gl.canvas.width, gl.canvas.height],
         'u_time': performance.now() / 1000,
-    'u_lut_size': Math.max(1, currentLutSize),
+        'u_lut_size': Math.max(1, currentLutSize),
+        'u_zoom_pan': [currentZoom, 0.0],
+        'u_pan_offset': [currentPanX, currentPanY],
         'u_temperature': (getVal('temperature-slider')/100)*0.5,
         'u_tint': (getVal('tint-slider')/100)*0.5,
         'u_vibrance': getVal('vibrance-slider')/100,
@@ -553,10 +678,19 @@ async function processImageOffscreen(img) {
     resizeFBOs(img.width, img.height);
     
     // Render with current settings
-    render();
+    render(); // Keep direct render for batch processing to ensure completion
 }
 
 // --- File Operations ---
 function saveImage() {
+    // Render once with original view (no zoom/pan) for saving
+    render(true);
     window.electron.saveImage(gl.canvas.toDataURL('image/png'));
+    // Render again with current view for display
+    requestRender();
 }
+
+
+// --- IPC Communication ---
+// Note: The save-image invoke already handles the save dialog and returns the result
+// No need for separate event listener since it's handled via invoke/response pattern
