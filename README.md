@@ -182,6 +182,7 @@
 | **Zeke 39** | 經典膠片風格，懷舊感 | 經典攝影、復古人像 | 經典膠片 |
 
 ### 🎨 風格分類
+- 風格檔為網路上收集的內容，如有侵權，請寫信告知！
 
 **📸 經典膠片系列 (12 款)**
 - Arabica 12, Ava 614, Bourbon 64, Byers 11, Clayton 33, Faded 47, Folger 50, Lucky 64, McKinnon 75, Remy 24, Tweed 71, Zeke 39
