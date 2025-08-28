@@ -6,7 +6,6 @@
   "start": "electron .",
   "clean": "if exist dist rd /s /q dist",
   "build": "npm run clean && electron-builder",
-  "build:alt": "electron-builder --config.directories.output=dist2",
   "pack": "electron-builder",
   "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -19,7 +18,7 @@
       "index.html",
       "renderer.js"
     ],
-    "icon": "build/icon.ico",
+    "icon": "pic-style.png",
     "extraResources": [
       {
         "from": "./cubes",

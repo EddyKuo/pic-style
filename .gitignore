@@ -5,6 +5,8 @@ build/
 # AI assistant configurations and caches
 .claude/
 .gemini/
+GEMINI.md
+CLAUDE.md
 
 # IDE and editor files  
 .vscode/

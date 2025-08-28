@@ -71,6 +71,118 @@ function setupUI() {
 
     // Setup zoom and pan controls
     setupZoomPanControls();
+    
+    // Setup collapsible sections
+    setupCollapsibleSections();
+    
+    // Setup theme system
+    setupThemeSystem();
+}
+
+// --- Collapsible Sections ---
+function setupCollapsibleSections() {
+    const headers = document.querySelectorAll('.collapsible-header');
+    
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const controlGroup = header.closest('.control-group');
+            const isCollapsed = controlGroup.getAttribute('data-collapsed') === 'true';
+            
+            // Toggle collapsed state
+            controlGroup.setAttribute('data-collapsed', !isCollapsed);
+            
+            // Optional: Save user preferences to localStorage
+            const sectionName = header.querySelector('span').textContent;
+            localStorage.setItem(`section-${sectionName}`, !isCollapsed);
+        });
+    });
+    
+    // Load saved preferences on startup
+    headers.forEach(header => {
+        const sectionName = header.querySelector('span').textContent;
+        const savedState = localStorage.getItem(`section-${sectionName}`);
+        if (savedState !== null) {
+            const controlGroup = header.closest('.control-group');
+            controlGroup.setAttribute('data-collapsed', savedState);
+        }
+    });
+}
+
+// --- Theme System ---
+function setupThemeSystem() {
+    const themeButtons = document.querySelectorAll('.theme-btn');
+    const body = document.body;
+    
+    // Load saved theme or default to 'dark'
+    const savedTheme = localStorage.getItem('app-theme') || 'dark';
+    applyTheme(savedTheme);
+    
+    // Add click handlers for theme buttons
+    themeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const theme = button.getAttribute('data-theme');
+            applyTheme(theme);
+            localStorage.setItem('app-theme', theme);
+        });
+    });
+    
+    function applyTheme(theme) {
+        // Remove existing theme attributes
+        body.removeAttribute('data-theme');
+        
+        // Apply new theme (except for 'dark' which is the default)
+        if (theme !== 'dark') {
+            body.setAttribute('data-theme', theme);
+        }
+        
+        // Update active button state
+        themeButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-theme') === theme) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Add special effects for specific themes
+        removeAllThemeEffects();
+        if (theme === 'cyberpunk') {
+            addCyberpunkEffects();
+        } else if (theme === 'galaxy') {
+            addGalaxyEffects();
+        } else if (theme === 'sunset') {
+            addSunsetEffects();
+        } else if (theme === 'ocean') {
+            addOceanEffects();
+        }
+    }
+    
+    function addCyberpunkEffects() {
+        const canvas = document.getElementById('gl-canvas');
+        if (canvas && !canvas.classList.contains('cyberpunk-glow')) {
+            canvas.classList.add('cyberpunk-glow');
+        }
+        document.title = '🌐 底片風格模擬器 | CYBERPUNK';
+    }
+    
+    function addGalaxyEffects() {
+        document.title = '✨ 底片風格模擬器 | GALAXY';
+    }
+    
+    function addSunsetEffects() {
+        document.title = '🌅 底片風格模擬器 | SUNSET';
+    }
+    
+    function addOceanEffects() {
+        document.title = '🌊 底片風格模擬器 | OCEAN';
+    }
+    
+    function removeAllThemeEffects() {
+        const canvas = document.getElementById('gl-canvas');
+        if (canvas) {
+            canvas.classList.remove('cyberpunk-glow');
+        }
+        document.title = '底片風格模擬器';
+    }
 }
 
 // --- Zoom and Pan Controls ---
@@ -83,35 +195,27 @@ function setupZoomPanControls() {
         
         const zoomFactor = 1.1;
         const rect = canvas.getBoundingClientRect();
-        const mouseX = (e.clientX - rect.left) / rect.width;
-        const mouseY = (e.clientY - rect.top) / rect.height;
+        
+        // Calculate mouse position relative to canvas center
+        const mouseX = (e.clientX - rect.left - rect.width / 2) / rect.width;
+        const mouseY = (e.clientY - rect.top - rect.height / 2) / rect.height;
+        
+        const oldZoom = zoomLevel;
         
         if (e.deltaY < 0) {
             // Zoom in
-            const oldZoom = zoomLevel;
             zoomLevel *= zoomFactor;
-            zoomLevel = Math.min(zoomLevel, 10.0); // Max zoom
-            
-            // Adjust pan to zoom toward mouse position
-            const zoomChange = zoomLevel / oldZoom;
-            panOffset.x += (mouseX - 0.5) * (1.0 - 1.0 / zoomChange) / zoomLevel;
-            panOffset.y += (mouseY - 0.5) * (1.0 - 1.0 / zoomChange) / zoomLevel;
+            zoomLevel = Math.min(zoomLevel, 20.0); // Max zoom increased
         } else {
             // Zoom out
-            const oldZoom = zoomLevel;
             zoomLevel /= zoomFactor;
-            zoomLevel = Math.max(zoomLevel, 0.1); // Min zoom
-            
-            // Adjust pan to zoom toward mouse position
-            const zoomChange = zoomLevel / oldZoom;
-            panOffset.x += (mouseX - 0.5) * (1.0 - 1.0 / zoomChange) / zoomLevel;
-            panOffset.y += (mouseY - 0.5) * (1.0 - 1.0 / zoomChange) / zoomLevel;
+            zoomLevel = Math.max(zoomLevel, 0.05); // Min zoom decreased
         }
         
-        // Apply pan limits after zoom
-        const maxPan = (zoomLevel - 1.0) / (2.0 * zoomLevel);
-        panOffset.x = Math.max(-maxPan, Math.min(maxPan, panOffset.x));
-        panOffset.y = Math.max(-maxPan, Math.min(maxPan, panOffset.y));
+        // Adjust pan to zoom toward mouse position (no limits)
+        const zoomChange = zoomLevel / oldZoom - 1.0;
+        panOffset.x -= mouseX * zoomChange / zoomLevel;
+        panOffset.y -= mouseY * zoomChange / zoomLevel;
         
         requestRender();
     });
@@ -132,15 +236,10 @@ function setupZoomPanControls() {
             
             // Convert pixel movement to texture coordinate movement
             const rect = canvas.getBoundingClientRect();
-            const newPanX = panOffset.x - (deltaX / rect.width) / zoomLevel;
-            const newPanY = panOffset.y + (deltaY / rect.height) / zoomLevel; // Invert Y axis
+            panOffset.x -= (deltaX / rect.width) / zoomLevel;
+            panOffset.y += (deltaY / rect.height) / zoomLevel; // Invert Y axis
             
-            // Calculate maximum pan limits based on zoom level
-            const maxPan = (zoomLevel - 1.0) / (2.0 * zoomLevel);
-            
-            // Clamp pan offset to prevent showing too much empty space
-            panOffset.x = Math.max(-maxPan, Math.min(maxPan, newPanX));
-            panOffset.y = Math.max(-maxPan, Math.min(maxPan, newPanY));
+            // No limits - allow free movement
             
             lastMousePos = { x: e.clientX, y: e.clientY };
             requestRender(); // Use throttled rendering
