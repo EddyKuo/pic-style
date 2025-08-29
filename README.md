@@ -369,8 +369,8 @@ Electron Framework
 
 ## 📞 聯絡資訊
 
-**專案維護者**: [您的名字]  
-**電子郵件**: your.email@example.com  
+**專案維護者**: [Eddy Kuo]
+**電子郵件**: itsuki520@gmail.com  
 **GitHub**: [@Eddy](https://github.com/EddyKuo)  
 
 **專案網址**: https://github.com/EddyKuo/pic-style  
