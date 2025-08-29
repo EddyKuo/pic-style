@@ -381,7 +381,7 @@ Electron Framework
 
 💖 **支持專案發展**
 - ⭐ [GitHub Star](https://github.com/EddyKuo/pic-style) - 給我們一顆星星
-- 💰 [PayPal 捐贈](https://github.com/EddyKuo/pic-style) - 贊助開發
+- 💰 [PayPal 捐贈](https://www.paypal.com/ncp/payment/9RMF2QUGNEZ24) - 贊助開發
 
 ---
 
