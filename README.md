@@ -371,20 +371,19 @@ Electron Framework
 
 **專案維護者**: [您的名字]  
 **電子郵件**: your.email@example.com  
-**GitHub**: [@yourusername](https://github.com/yourusername)  
+**GitHub**: [@Eddy](https://github.com/EddyKuo)  
 
-**專案網址**: https://github.com/yourusername/pic-style  
-**問題回報**: https://github.com/yourusername/pic-style/issues  
-**功能建議**: https://github.com/yourusername/pic-style/discussions  
+**專案網址**: https://github.com/EddyKuo/pic-style  
+**問題回報**: https://github.com/EddyKuo/pic-style/issues  
+**功能建議**: https://github.com/EddyKuo/pic-style/discussions  
+
+嗨，我是 [Eddy]！如果您喜歡我的專案，歡迎支持我，讓我能持續開發下去。
+
+💖 **支持專案發展**
+- ⭐ [GitHub Star](https://github.com/EddyKuo/pic-style) - 給我們一顆星星
+- 💰 [PayPal 捐贈](https://github.com/EddyKuo/pic-style) - 贊助開發
 
 ---
-
-## 📈 專案統計
-
-![GitHub stars](https://img.shields.io/github/stars/yourusername/pic-style?style=social)
-![GitHub forks](https://img.shields.io/github/forks/yourusername/pic-style?style=social)
-![GitHub issues](https://img.shields.io/github/issues/yourusername/pic-style)
-![GitHub downloads](https://img.shields.io/github/downloads/yourusername/pic-style/total)
 
 ---
 
