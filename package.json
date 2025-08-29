@@ -12,6 +12,7 @@
   "build": {
     "appId": "com.picstyle.app",
     "productName": "Pic Style",
+    "compression": "maximum",
     "files": [
       "main.js",
       "preload.js",
@@ -47,7 +48,8 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "compression": "maximum"
     },
     "portable": {
       "artifactName": "${productName}-${version}-portable.exe"

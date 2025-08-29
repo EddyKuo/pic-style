@@ -11,8 +11,22 @@ uniform float u_tint;
 uniform float u_vibrance;
 
 vec3 applyLut(vec3 color) {
-    float slicesPerRow = floor(sqrt(u_lut_size));
-    float numRows = ceil(u_lut_size / slicesPerRow);
+    // 優化的切片佈局計算，支援不同的LUT尺寸
+    float slicesPerRow, numRows;
+    
+    if (abs(u_lut_size - 32.0) < 0.5) {
+        // 32x32x32: 使用 8x4 的切片佈局
+        slicesPerRow = 8.0;
+        numRows = 4.0;
+    } else if (abs(u_lut_size - 33.0) < 0.5) {
+        // 33x33x33: 使用 6x6 的切片佈局
+        slicesPerRow = 6.0;
+        numRows = 6.0;
+    } else {
+        // 其他尺寸: 使用動態計算
+        slicesPerRow = floor(sqrt(u_lut_size));
+        numRows = ceil(u_lut_size / slicesPerRow);
+    }
 
     float slice_z = color.b * (u_lut_size - 1.0);
     float slice_z_floor = floor(slice_z);

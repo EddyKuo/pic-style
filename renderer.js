@@ -559,6 +559,7 @@ function parseCube(text) {
 
         if (trimmedLine.startsWith('LUT_3D_SIZE')) {
             size = parseInt(trimmedLine.split(' ')[1]);
+            debugLog(`檢測到 LUT 尺寸: ${size}x${size}x${size}`);
             continue;
         }
 
@@ -573,20 +574,58 @@ function parseCube(text) {
     if (size === 0) {
         throw new Error("CUBE 檔案中找不到 LUT_3D_SIZE");
     }
-    if (data.length !== size * size * size * 3) {
-        throw new Error(`LUT 資料大小不符. 預期 ${size*size*size*3}, 實際 ${data.length}`);
+    
+    const expectedDataLength = size * size * size * 3;
+    if (data.length !== expectedDataLength) {
+        debugLog(`LUT 資料解析警告: 檔案尺寸 ${size}x${size}x${size}, 預期資料點數 ${expectedDataLength}, 實際 ${data.length}`);
+        
+        // 對於常見的尺寸不匹配進行特殊處理
+        if (size === 33 && data.length < expectedDataLength) {
+            debugLog('33x33x33 LUT 資料不完整，嘗試修復...');
+            // 填補缺失的資料點
+            while (data.length < expectedDataLength) {
+                // 複製最後一個有效的RGB值
+                const lastR = data[data.length - 3] || 1.0;
+                const lastG = data[data.length - 2] || 1.0;
+                const lastB = data[data.length - 1] || 1.0;
+                data.push(lastR, lastG, lastB);
+            }
+            debugLog(`修復後資料長度: ${data.length}`);
+        } else {
+            throw new Error(`LUT 資料大小不符. 預期 ${expectedDataLength}, 實際 ${data.length}`);
+        }
     }
 
     return { data, size };
 }
 
 function convertLutTo2D(data, size) {
-    const slicesPerRow = Math.floor(Math.sqrt(size));
-    const numRows = Math.ceil(size / slicesPerRow);
+    // 優化的切片佈局計算，支援不同的LUT尺寸
+    let slicesPerRow, numRows;
+    
+    if (size === 32) {
+        // 32x32x32: 使用 8x4 的切片佈局 (optimized for 32^3)
+        slicesPerRow = 8;
+        numRows = 4;
+    } else if (size === 33) {
+        // 33x33x33: 使用 6x6 的切片佈局 (33 slices fit in 6x6 = 36 slots)
+        slicesPerRow = 6;
+        numRows = 6;
+    } else {
+        // 其他尺寸: 使用動態計算
+        slicesPerRow = Math.ceil(Math.sqrt(size));
+        numRows = Math.ceil(size / slicesPerRow);
+    }
+    
     const textureWidth = size * slicesPerRow;
     const textureHeight = size * numRows;
+    
+    debugLog(`LUT ${size}x${size}x${size} -> 2D 紋理 ${textureWidth}x${textureHeight} (${slicesPerRow}x${numRows} 切片佈局)`);
 
     const textureData = new Uint8Array(textureWidth * textureHeight * 4);
+    
+    // 初始化為黑色
+    textureData.fill(0);
 
     for (let z = 0; z < size; z++) {
         for (let y = 0; y < size; y++) {
@@ -599,11 +638,14 @@ function convertLutTo2D(data, size) {
                 const dstX = sliceX * size + x;
                 const dstY = sliceY * size + y;
                 const dstIndex = (dstY * textureWidth + dstX) * 4;
-
-                textureData[dstIndex] = Math.round(data[srcIndex] * 255);
-                textureData[dstIndex + 1] = Math.round(data[srcIndex + 1] * 255);
-                textureData[dstIndex + 2] = Math.round(data[srcIndex + 2] * 255);
-                textureData[dstIndex + 3] = 255;
+                
+                // 確保索引在範圍內
+                if (srcIndex + 2 < data.length && dstIndex + 3 < textureData.length) {
+                    textureData[dstIndex] = Math.round(Math.max(0, Math.min(255, data[srcIndex] * 255)));
+                    textureData[dstIndex + 1] = Math.round(Math.max(0, Math.min(255, data[srcIndex + 1] * 255)));
+                    textureData[dstIndex + 2] = Math.round(Math.max(0, Math.min(255, data[srcIndex + 2] * 255)));
+                    textureData[dstIndex + 3] = 255;
+                }
             }
         }
     }
